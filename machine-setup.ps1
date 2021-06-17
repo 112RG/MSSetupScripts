@@ -23,8 +23,6 @@ $global:machinesetupconfig = @{
     MachineSetupConfigFolder = (Join-Path $env:temp 'MachineSetup')
     MachineSetupAppsFolder = (Join-Path $env:temp 'MachineSetup\apps')
     BaseChocoPackages = @(
-        'boxstarter',
-        'boxstarter.winconfig'
         'git.install',
         'googlechrome',
         'firefox',
@@ -62,7 +60,7 @@ $global:machinesetupconfig = @{
         'obsidian'
         'everything'
     )
-    $applicationList = @(
+    ApplicationList = @(
 	    "Microsoft.BingFinance"
 	    "Microsoft.3DBuilder"
 	    "Microsoft.BingFinance"
@@ -290,6 +288,21 @@ function InstallWithChoco{
     process{
         foreach($pkg in $packages){
             choco install $pkg -y
+        }
+    }
+}
+
+function RemoveApps{
+    [cmdletbinding()]
+    param(
+        [Parameter(Position=0,ValueFromPipeline=$true)]
+        [array]$apps
+    )
+    process{
+        foreach($app in $apps){
+            Write-Output "Trying to remove $app"
+	        Get-AppxPackage $app -AllUsers | Remove-AppxPackage
+	        Get-AppXProvisionedPackage -Online | Where DisplayName -like $app | Remove-AppxProvisionedPackage -Online
         }
     }
 }
@@ -522,31 +535,26 @@ function ConfigureTaskBar{
         }
     }
 }
-function removeApp {
-	Param ([string]$appName)
-	Write-Output "Trying to remove $appName"
-	Get-AppxPackage $appName -AllUsers | Remove-AppxPackage
-	Get-AppXProvisionedPackage -Online | Where DisplayName -like $appName | Remove-AppxProvisionedPackage -Online
-}
+
 function ConfigureWindows{
     [cmdletbinding()]
     param()
-    begin{
-        LoadBoxstarter
-    }
     process{
         RunTask @(
             #{Enable-RemoteDesktop},
             # Show hidden files, Show protected OS files, Show file extensions
             {Set-WindowsExplorerOptions -EnableShowHiddenFilesFoldersDrives -EnableShowProtectedOSFiles -EnableShowFileExtensions},
             #--- File Explorer Settings ---
+            #{$Global:machinesetupconfig.ApplicationList | RemoveApps},
             # will expand explorer to the actual folder you're in
             {Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Name NavPaneExpandToCurrentFolder -Value 1},
             #adds things back in your left pane like recycle bin
             {Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Name NavPaneShowAllFolders -Value 1},
             #opens PC to This PC, not quick access
-            {Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Name LaunchTo -Value 1}
-
+            {Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Name LaunchTo -Value 1},
+            {powercfg.exe -SETACTIVE 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c},
+            {powercfg.exe /Change monitor-timeout-ac 5},
+            {powercfg.exe /Change standby-timeout-dc 0}
             #{AddFonts},
             #{DisableScreenSaver},
             #{
@@ -560,10 +568,6 @@ function ConfigureWindows{
         # TODO: update mouse pointer speed
 
         # TODO: update mouse pointer to show when CTRL is clicked
-    }
-
-    foreach ($app in $applicationList) {
-        removeApp $app
     }
 }
 
@@ -609,22 +613,22 @@ function ConfigureMachine{
 
         EnsureFolderExists $codehome
         EnsureFolderExists ($global:machinesetupconfig.MachineSetupAppsFolder)
-
-        InstallBaseApps
+        ConfigureWindows
+       # InstallBaseApps
         
         RunTask @(
-            {EnsurePhotoViewerRegkeyAdded},
-            {ConfigureTaskBar},
+            #{EnsurePhotoViewerRegkeyAdded},
+            #{ConfigureTaskBar},
 
             #{ConfigureConsole},
             #{ConfigureGit},
             #{ConfigurePowershell},
 
             #{EnsureBaseReposCloned},
-            {LoadModules},
-            {InstallSecondaryApps}
+            #{LoadModules},
+            #{InstallSecondaryApps}
 
-            {ConfigureWindows},
+            {ConfigureWindows}
             #{ConfigureVisualStudio},
             #{ConfigureApps}            
         )
