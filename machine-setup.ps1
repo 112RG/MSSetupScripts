@@ -20,8 +20,8 @@ function New-ObjectFromProperties{
 set-alias -Name newobj -Value New-ObjectFromProperties   
 
 $global:machinesetupconfig = @{
-    MachineSetupConfigFolder = (Join-Path $env:temp 'SayedHaMachineSetup')
-    MachineSetupAppsFolder = (Join-Path $env:temp 'SayedHaMachineSetup\apps')
+    MachineSetupConfigFolder = (Join-Path $env:temp 'MachineSetup')
+    MachineSetupAppsFolder = (Join-Path $env:temp 'MachineSetup\apps')
     BaseChocoPackages = @(
         'boxstarter',
         'boxstarter.winconfig'
@@ -29,10 +29,10 @@ $global:machinesetupconfig = @{
         'googlechrome',
         'firefox',
         'notepadplusplus.install',
-        'conemu'
+        'microsoft-windows-terminal'
         '7zip.install'
     )
-    BaseRepos = @(
+<#     BaseRepos = @(
         (newobj @{
                 SSH = 'git@github.com:sayedihashimi/sayed-tools.git'
                 HTTPS = 'https://github.com/sayedihashimi/sayed-tools.git' })
@@ -44,29 +44,25 @@ $global:machinesetupconfig = @{
         (newobj @{
                 SSH = 'git@github.com:dahlbyk/posh-git.git'
                 HTTPS = 'git@github.com:dahlbyk/posh-git.git' })
-    )
+    ) #>
     SecondaryChocoPackages = @(
-        'p4merge',
-        'f.lux',        
-        #'paint.net',
-        'sublimetext3',
-        'fiddler4',
-        #'gimp',
-        #'linqpad4',
-        'kdiff3',
-        'balsamiqmockups3',
-        #'adobe-creative-cloud',
-        #'inkscape',
-        'visualstudiocode',
-        # spotify needs to be installed as normal user
-        # 'spotify',
-        'everything',
-        #'markdownpad2',
-        #'snagit',
-        'kindle',
-        'dropbox'
+        'fiddler',
+        'discord-canary',
+        'steam-client',
+        'vscode-insiders',
+        'greenshot',
+        'vlc',
+        'zoom',
+        'winscp',
+        'openjdk11',
+        'bitwarden',
+        'foobar2000',
+        'qbittorrent-enhanced',
+        'windirstat',
+        'obsidian'
+        'everything'
     )
-    WallpaperUrl = 'https://raw.githubusercontent.com/sayedihashimi/sayed-tools/master/powershell/checking-out-the-view.jpg'
+    #WallpaperUrl = 'https://raw.githubusercontent.com/sayedihashimi/sayed-tools/master/powershell/checking-out-the-view.jpg'
 }
 
 function InstallPrompt{
@@ -762,7 +758,7 @@ function ConfigureTaskBar{
     }
 }
 
-function ConfigureWindows{
+<# function ConfigureWindows{
     [cmdletbinding()]
     param()
     begin{
@@ -787,7 +783,7 @@ function ConfigureWindows{
 
         # TODO: update mouse pointer to show when CTRL is clicked
     }
-}
+} #>
 
 # http://www.getpaint.net/doc/latest/UnattendedInstallation.html
 function InstallPaintDotNet(){
@@ -948,17 +944,17 @@ function ConfigureMachine{
             {EnsurePhotoViewerRegkeyAdded},
             {ConfigureTaskBar},
 
-            {ConfigureConsole},
-            {ConfigureGit},
-            {ConfigurePowershell},
+            #{ConfigureConsole},
+            #{ConfigureGit},
+            #{ConfigurePowershell},
 
-            {EnsureBaseReposCloned},
+            #{EnsureBaseReposCloned},
             {LoadModules},
-            {InstallSecondaryApps},
+            {InstallSecondaryApps}
 
-            {ConfigureWindows},
-            {ConfigureVisualStudio},
-            {ConfigureApps}            
+            #{ConfigureWindows},
+            #{ConfigureVisualStudio},
+            #{ConfigureApps}            
         )
     }
 }
