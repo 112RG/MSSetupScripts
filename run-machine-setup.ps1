@@ -9,17 +9,17 @@ if(-not $runningAsAdmin){
 
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned
 # download the file and run it
-$machineSetupUrl = 'https://raw.githubusercontent.com/112RG/MSSetupScripts/master/machine-setup.ps1'
-$expectedFilepath = (join-path $env:TEMP 'SayedHamachineSetup\machine-setup.ps1')
+#$machineSetupUrl = 'https://raw.githubusercontent.com/112RG/MSSetupScripts/master/machine-setup.ps1'
+$expectedFilepath = (join-path $env:TEMP 'MachineSetup\machine-setup.ps1')
+$expectedFilepath = ('./machine-setup.ps1')
+#if(test-path $expectedFilepath -PathType Leaf){
+#    Remove-Item -Path $expectedFilepath
+#}
+#
+#if(-not (Test-Path $expectedFilepath)){
+#    New-Item -Path ([System.IO.Path]::GetDirectoryName($expectedFilepath)) -ItemType Directory
+#}
 
-if(test-path $expectedFilepath -PathType Leaf){
-    Remove-Item -Path $expectedFilepath
-}
-
-if(-not (Test-Path $expectedFilepath)){
-    New-Item -Path ([System.IO.Path]::GetDirectoryName($expectedFilepath)) -ItemType Directory
-}
-
-Invoke-WebRequest -Uri $machineSetupUrl -OutFile $expectedFilepath
+#Invoke-WebRequest -Uri $machineSetupUrl -OutFile $expectedFilepath
 
 . $expectedFilepath
