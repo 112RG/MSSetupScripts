@@ -62,6 +62,49 @@ $global:machinesetupconfig = @{
         'obsidian'
         'everything'
     )
+    $applicationList = @(
+	    "Microsoft.BingFinance"
+	    "Microsoft.3DBuilder"
+	    "Microsoft.BingFinance"
+	    "Microsoft.BingNews"
+	    "Microsoft.BingSports"
+	    "Microsoft.BingWeather"
+	    "Microsoft.CommsPhone"
+	    "Microsoft.Getstarted"
+	    "Microsoft.WindowsMaps"
+	    "*MarchofEmpires*"
+	    "Microsoft.GetHelp"
+	    "Microsoft.Messaging"
+	    "*Minecraft*"
+	    "Microsoft.MicrosoftOfficeHub"
+	    "Microsoft.OneConnect"
+	    "Microsoft.WindowsPhone"
+	    "Microsoft.WindowsSoundRecorder"
+	    "*Solitaire*"
+	    "Microsoft.MicrosoftStickyNotes"
+	    "Microsoft.Office.Sway"
+	    "Microsoft.XboxApp"
+	    "Microsoft.XboxIdentityProvider"
+	    "Microsoft.ZuneMusic"
+	    "Microsoft.ZuneVideo"
+	    "Microsoft.NetworkSpeedTest"
+	    "Microsoft.FreshPaint"
+	    "Microsoft.Print3D"
+	    "*Autodesk*"
+	    "*BubbleWitch*"
+        "king.com*"
+        "G5*"
+	    "*Dell*"
+	    "*Facebook*"
+	    "*Keeper*"
+	    "*Netflix*"
+	    "*Twitter*"
+	    "*Plex*"
+	    "*.Duolingo-LearnLanguagesforFree"
+	    "*.EclipseManager"
+	    "ActiproSoftwareLLC.562882FEEB491" # Code Writer
+	    "*.AdobePhotoshopExpress"
+    )
     #WallpaperUrl = 'https://raw.githubusercontent.com/sayedihashimi/sayed-tools/master/powershell/checking-out-the-view.jpg'
 }
 
@@ -119,18 +162,6 @@ if([string]::IsNullOrWhiteSpace($Global:dropboxhome)){
     }
 }
 
-if([string]::IsNullOrWhiteSpace($Global:codehome)){
-    if(-not ([string]::IsNullOrWhiteSpace($env:codehome))){
-        $Global:codehome = $env:codehome
-    }
-
-    if([string]::IsNullOrWhiteSpace($Global:codehome)){
-        $Global:codehome = 'c:\data\mycode'
-        if(-not $IsWindows){
-            $global:codehome = Join-Path (Get-Item ~) "data" "mycode"
-        }
-    }
-}
 
 function Add-Path{
     [cmdletbinding()]
@@ -278,38 +309,6 @@ function InstallBaseApps{
     }
 }
 
-function ConfigureFirefox{
-    [cmdletbinding()]
-    param(
-        [string]$downloadRootUrl = 'https://dl.dropboxusercontent.com/u/40134810/PcSettings/firefox/',
-        [string]$destFolder = "$env:ProgramFiles\Mozilla Firefox\defaults\pref\"
-    )
-    process{
-        # TODO: Configure google as default search
-        $files = @(
-            @{
-                Filename = 'autoconfig.js'
-                SourceUrl = ('{0}autoconfig.js' -f $downloadRootUrl)
-                DestPath = (join-path $destFolder 'autoconfig.js' )
-            }
-            @{
-                Filename = 'mozilla.cfg'
-                SourceUrl = ('{0}mozilla.cfg' -f $downloadRootUrl)
-                DestPath = (join-path $destFolder 'mozilla.cfg' )
-            }
-        )
-
-        foreach($f in $files){
-            if(-not (test-path $f.DestPath)){
-                $tf = (GetLocalFileFor -downloadUrl ($f.SourceUrl) -filename ($f.Filename))
-                EnsureFolderExists([System.IO.Path]::GetDirectoryName($f.DestPath))
-                Copy-Item -Path $tf -Destination $f.DestPath
-            }
-        }
-
-    }
-}
-
 function InstallSecondaryApps{
     [cmdletbinding()]
     param()
@@ -343,169 +342,12 @@ function ConfigureApps{
     }
 }
 
-function ConfigureVisualStudio{
-    [cmdletbinding()]
-    param()
-    process{
-        # copy snippets
-        CopyVisualStudioSnippets
-    }
-}
-
-function CopyVisualStudioSnippets{
-    [cmdletbinding()]
-    param(
-        $snippetSourcePath = (Join-Path $Global:codehome 'sayed-tools\snippets')
-    )
-    process{
-        if(test-path -Path $snippetSourcePath -PathType Container){
-            [string[]]$snippetsToCopy = (Get-ChildItem -Path $snippetSourcePath *.snippet -File).FullName
-            [string]$docspath = [Environment]::GetFolderPath("MyDocuments")
-            [string[]]$pathsToCopyTo ="$docspath\Visual Studio 2019\Code Snippets\Visual C#\My Code Snippets",
-                                      "$docspath\Visual Studio 2017\Code Snippets\Visual C#\My Code Snippets",
-                                      "$docspath\Visual Studio 2015\Code Snippets\Visual C#\My Code Snippets",
-                                      "$docspath\Visual Studio 2013\Code Snippets\Visual C#\My Code Snippets"
-            foreach($p in $pathsToCopyTo){
-                EnsureFolderExists -path $p
-                foreach($file in $snippetsToCopy){
-                    [string]$destpath = (Join-Path $p (get-item -Path $file).name)
-                    if(-not (test-path -Path $destpath)){
-                        Copy-Item -LiteralPath $file -Destination $destpath
-                    }
-                }
-            }    
-        }
-        else{
-            'Snippet source dir not found at [{0}]' -f $snippetSourcePath | Write-Warning
-        }
-    }
-}
-
-function EnsureInstalled-MarkdownPad{
-    [cmdletbinding()]
-    param(
-        [string]$markdownpaddownloadurl = 'http://markdownpad.com/download/markdownpad2-portable.zip',
-        [string]$exerelpath = 'markdownpad2-portable\MarkdownPad2.exe'
-    )
-    process{
-        $expectedPath = (Join-Path $Global:machinesetupconfig.MachineSetupAppsFolder $exerelpath)
-        if(test-path $expectedPath){
-            $mkzip = (GetLocalFileFor -downloadUrl $markdownpaddownloadurl -filename 'markdownpad2-portable.zip')
-            $installFolder = $Global:machinesetupconfig.MachineSetupAppsFolder
-            & (Get7ZipPath) x -y "-o$installFolder" "$mkzip"
-            # pin to start menu
-            PinToStartmenu -pathtopin $expectedPath
-            # add to path
-            Add-Path -pathToAdd $expectedPath
-        }
-    }
-}
-
-function EnsureBaseReposCloned{
-    [cmdletbinding()]
-    param()
-    process{
-        foreach($repo in $global:machinesetupconfig.BaseRepos){
-            if($repo -ne $null){
-            # if(-not [string]::IsNullOrWhiteSpace($repo)){
-                $sshurl = $repo.SSH
-                $httpsurl = $repo.HTTPS
-
-                if([string]::IsNullOrWhiteSpace($sshurl)){
-                    continue
-                }
-
-                $reponame = $sshurl.Substring($sshurl.LastIndexOf('/')+1,($sshurl.LastIndexOf('.git') - ($sshurl.LastIndexOf('/')+1)))
-
-                # if the folder is not on disk clone the repo
-                $dest = (Join-Path $Global:codehome $reponame)
-                if(-not (Test-Path $dest)){
-                    Push-Location
-                    try{
-                        Set-Location $Global:codehome
-
-                        $sshfolder = (Join-Path $env:USERPROFILE '.ssh')
-                        # clone with ssh if the .ssh folder exists, otherwise with https
-                        if( test-path $sshfolder){
-                            'Cloning repo [{0}] with ssh because the .ssh folder was found at [{1}]' -f $reponame, $sshfolder | Write-Verbose
-                            & git.exe clone $sshurl    
-                        }
-                        else{
-                            'Cloning repo [{0}] with https because the .ssh folder was not found at [{1}]' -f $reponame, $sshfolder | Write-Verbose
-                            & git.exe clone $httpsurl
-                        }
-                    }
-                    finally{
-                        Pop-Location
-                    }
-                }
-            }
-        }
-    }
-}
 
 function IsRunningAsAdmin{
     [cmdletbinding()]
     param()
     process{
         [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
-    }
-}
-
-function ConfigureConsole{
-    [cmdletbinding()]
-    param(
-        [Parameter(Position=0)]
-        [string]$conemuxmlurl = 'https://raw.githubusercontent.com/sayedihashimi/sayed-tools/master/dotfiles/ConEmu.xml',
-        [Parameter(Position=1)]
-        [string]$conemulocalpath = (Join-Path $env:APPDATA 'conemu.xml')
-    )
-    process{
-        EnsureFolderExists -path ([System.IO.Path]::GetDirectoryName($conemulocalpath))
-        Invoke-WebRequest -Uri $conemuxmlurl -OutFile $conemulocalpath
-    }
-}
-
-function ConfigureGit{
-    [cmdletbinding()]
-    param(
-        [string]$sshdownloadurl = $env:machinesetupsshurl,
-        [string]$machinesetuppwd = $env:machinesetuppassword
-    )
-    process{
-        # copy .gitconfig from dropbox to documents
-        $documentspath = ([Environment]::GetFolderPath("MyDocuments"))
-        if( ([string]::IsNullOrWhiteSpace($documentspath)) -or (-not (test-path $documentspath))){
-            'Documents folder not found at [{0}]' -f $documentspath |Write-Error
-            break
-        }
-
-        $gitconfigurl = 'https://raw.githubusercontent.com/sayedihashimi/sayed-tools/master/dotfiles/.gitconfig'
-        $gitconfigsource=(GetLocalFileFor -filename '.gitconfig' -downloadUrl $gitconfigurl)
-        $destgitconfig = (Join-Path $documentspath '.gitconfig')
-        if(-not (Test-Path $destgitconfig)){
-            '.gitconfig not found at [{0}] copying from [{1}]' -f $destgitconfig,$gitconfigsource | Write-Verbose
-            Copy-Item -Path $gitconfigsource -Destination $destgitconfig
-        }
-
-        # copy ssh keys to documents folder        
-        $destsshpath = (Join-Path $env:USERPROFILE '.ssh')
-        if(-not (Test-Path $destsshpath)){           
-            if([string]::IsNullOrWhiteSpace($sshdownloadurl) -or [string]::IsNullOrWhiteSpace($machinesetuppwd)){
-                 $msg = 'The .ssh url or the machine setup password is empty. Check 1Password for the values and assign env vars, and restart this script'
-                 throw $msg
-            }
-
-            $sshzip = (GetLocalFileFor -downloadUrl $sshdownloadurl -filename '.ssh.7z')
-            $7zipexe = (Get7ZipPath)
-            if(-not (Test-Path -Path $7zipexe -PathType Leaf) ){
-                throw ('7zip not found at [{0}]' -f $7zipexe)
-            }
-            EnsureFolderExists -path $destsshpath
-            & $7zipexe e -y "-p$machinesetuppwd" "-o$destsshpath" $sshzip
-        }
-
-        Add-Path -pathToAdd "$env:ProgramFiles\Git\bin" -envTarget User
     }
 }
 
@@ -592,61 +434,6 @@ function ExtractLocalZip{
     }
 }
 
-function ConfigurePowershell{
-    [cmdletbinding()]
-    param(
-        [string]$psProfilePath = $profile,
-        [string]$sourceProfilePath,
-        [string]$profileDownloadurl = 'https://www.dropbox.com/s/k1i3pkxzk2njvd5/sayed-profile-script-current.ps1?dl=0'
-    )
-    process{
-        if([string]::IsNullOrWhiteSpace($sourceProfilePath)){
-            $sourceProfilePath = (GetLocalFileFor -downloadUrl $profileDownloadurl -filename sayed-profile-script-current.ps1)
-        }
-
-        # copy profile to $PROFILE if not exist
-        $destprofile = $profile
-        if(-not (Test-Path $destprofile)){
-               'PowerShell profile not found at [{0}] copying from [{1}]' -f $sourcesshpath, $destsshpath | Write-Verbose
-               # use -Force because the folder may need to get created as well
-               Copy-Item -Path $sourceProfilePath -Destination $destprofile -Force
-        }
-    }
-}
-
-function EnsurePhotoViewerRegkeyAdded{
-    [cmdletbinding()]
-    param(
-        [Parameter(Position=0)]
-        [string]$photoviewerregkeypath,
-
-        [Parameter(Position=1)]
-        [string]$photoviewhasrunpath = (Join-Path $global:machinesetupconfig.MachineSetupConfigFolder 'photoviewerreg.hasrun'),
-
-        [Parameter(Position=3)]
-        [string]$photoviewerregdownloadurl = 'https://raw.githubusercontent.com/sayedihashimi/sayed-tools/master/powershell/photo-viewer.reg'
-    )
-    process{
-        if(-not (Test-Path $photoviewhasrunpath)){
-            if([string]::IsNullOrWhiteSpace($photoviewerregkeypath)){
-                $photoviewerregkeypath = (GetLocalFileFor -downloadUrl $photoviewerregdownloadurl -filename 'photo-viewer.reg')
-            }
-            
-            # run the .reg key and then create the .hasrun file
-            $errorCountBefore = $Error.Count
-            & $photoviewerregkeypath
-            $errorCountAfter = $Error.Count
-            
-            if($errorCountBefore -eq $errorCountAfter){
-                'reg key has been added'
-            }
-
-            CreateDummyFile -filepath $photoviewhasrunpath
-            # there is
-        }
-    }
-}
-
 function CreateDummyFile{
     [cmdletbinding()]
     param(
@@ -711,28 +498,6 @@ function PinToTaskbar{
     }
 }
 
-function PinToStartmenu{
-    [cmdletbinding()]
-    param(
-        [Parameter(Position=0,ValueFromPipeline=$true)]
-        [string[]]$pathtopin,
-
-        [Parameter(Position=0)]
-        [string]$pinTov2 = (GetPinToTaskbarTool)
-    )
-    process{
-        if(-not (Test-Path $pinTov2)){
-            'PinTo10v2.exe not found at [{0}]' -f $pinTov2 | Write-Error
-            break
-        }
-
-        foreach($path in $pathtopin){
-            'Pin to startmenu with command: [{0} /pinsm {1}]' -f $pinTov2,$path | Write-Verbose
-            & $pinTov2 /pinsm $path
-        }
-    }
-}
-
 function ConfigureTaskBar{
     [cmdletbinding()]
     param(
@@ -757,8 +522,13 @@ function ConfigureTaskBar{
         }
     }
 }
-
-<# function ConfigureWindows{
+function removeApp {
+	Param ([string]$appName)
+	Write-Output "Trying to remove $appName"
+	Get-AppxPackage $appName -AllUsers | Remove-AppxPackage
+	Get-AppXProvisionedPackage -Online | Where DisplayName -like $appName | Remove-AppxProvisionedPackage -Online
+}
+function ConfigureWindows{
     [cmdletbinding()]
     param()
     begin{
@@ -766,137 +536,39 @@ function ConfigureTaskBar{
     }
     process{
         RunTask @(
-            {Set-WindowsExplorerOptions -EnableShowFileExtensions},
-            {Enable-RemoteDesktop},
+            #{Enable-RemoteDesktop},
+            # Show hidden files, Show protected OS files, Show file extensions
+            {Set-WindowsExplorerOptions -EnableShowHiddenFilesFoldersDrives -EnableShowProtectedOSFiles -EnableShowFileExtensions},
+            #--- File Explorer Settings ---
+            # will expand explorer to the actual folder you're in
+            {Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Name NavPaneExpandToCurrentFolder -Value 1},
+            #adds things back in your left pane like recycle bin
+            {Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Name NavPaneShowAllFolders -Value 1},
+            #opens PC to This PC, not quick access
+            {Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Name LaunchTo -Value 1}
 
-            {AddFonts},
-            {DisableScreenSaver},
-            {
-                $wppath = (GetLocalFileFor -downloadUrl $global:machinesetupconfig.WallpaperUrl -filename 'wp-view.jpg')
-                Update-wallpaper -path $wppath -Style 'Fit'
-            },
+            #{AddFonts},
+            #{DisableScreenSaver},
+            #{
+            #    $wppath = (GetLocalFileFor -downloadUrl $global:machinesetupconfig.WallpaperUrl -filename 'wp-view.jpg')
+            #    Update-wallpaper -path $wppath -Style 'Fit'
+           # },
 
-            {InstallPaintDotNet}   
+            #{InstallPaintDotNet}   
         )
 
         # TODO: update mouse pointer speed
 
         # TODO: update mouse pointer to show when CTRL is clicked
     }
-} #>
+
+    foreach ($app in $applicationList) {
+        removeApp $app
+    }
+}
 
 # http://www.getpaint.net/doc/latest/UnattendedInstallation.html
-function InstallPaintDotNet(){
-    [cmdletbinding()]
-    param(
-        [string]$downloadUrl = 'http://www.dotpdn.com/files/paint.net.4.0.13.install.zip',
-        [string]$filename = 'paint.net.4.0.13.install.zip',
-        [string]$installerRelPath = 'paint.net.4.0.13.install.exe'
-    )
-    process{        
-        $extractfolder = ExtractRemoteZip -downloadUrl $downloadUrl -filename $filename
-        $foo = 'bar'
 
-        $installerexe = Join-Path $extractfolder $installerRelPath
-
-        & $installerexe /auto DESKTOPSHORTCUT 1
-
-
-    }
-}
-
-function DisableScreenSaver(){
-    [cmdletbinding()]
-    param(
-        [string]$screenSaverDownloadUrl = 'https://github.com/sayedihashimi/sayed-tools/raw/master/contrib/ScreenSaverBlocker.exe'
-    )
-    process{
-        'Copying ScreenSaverBlocker.exe to startup folder' | Write-Verbose
-        $localexe = (GetLocalFileFor -downloadUrl $screenSaverDownloadUrl -filename 'ScreenSaverBlocker.exe')
-        [string]$destPath = ("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\ScreenSaverBlocker.exe")
-        if(-not (test-path $destPath)){
-            EnsureFolderExists -path ([System.IO.Path]::GetDirectoryName($destPath))
-            Copy-Item -LiteralPath $localexe -Destination $destPath
-            start $localexe
-        }
-    }
-}
-
-$global:machinesetupuserconfig = @{
-    AddFontScriptUrl = 'powershell/Add-Font.ps1'
-    Fonts = @(
-        @{
-            Filename = join-path -Path $scriptDir 'powershell/fonts/source-sans-pro-2.020R-ro-1.075R-it.zip'
-            #DownloadUrl = 'https://github.com/adobe-fonts/source-sans-pro/archive/2.020R-ro/1.075R-it.zip'
-            RelpathToFontsFolder = 'source-sans-pro-2.020R-ro-1.075R-it/TTF'
-        }
-        @{
-            Filename = join-path -Path $scriptDir 'powershell/fonts/source-code-pro-2.030R-ro-1.050R-it.zip'
-            #DownloadUrl = 'https://github.com/adobe-fonts/source-code-pro/archive/2.030R-ro/1.050R-it.zip'
-            RelpathToFontsFolder = 'source-code-pro-2.030R-ro-1.050R-it/TTF'
-        }
-    )
-}
-
-function AddFonts{
-    [cmdletbinding()]
-    param(
-        [Parameter(Position=1)]
-        [string]$addFonthasrunpath = (Join-Path $global:machinesetupconfig.MachineSetupConfigFolder 'addfonts.hasrun'),
-
-        [Parameter(Position=2)]
-        [string]$addFontScriptUrl = ($global:machinesetupuserconfig.AddFontScriptUrl)
-    )
-    process{
-        if(-not (test-path -path $addFonthasrunpath)){
-            # get the Add-Font script
-            $addFontScriptPath = (GetLocalFileFor -downloadUrl $addFontScriptUrl -filename 'add-font.ps1')
-
-            foreach($font in $global:machinesetupuserconfig.Fonts){
-                # extract it
-                $extractfolder = ExtractLocalZip -filepath $font.Filename #ExtractRemoteZip -downloadUrl $font.Downloadurl -filename $font.Filename
-                $pathtofiles = (join-path $extractfolder $font.RelpathToFontsFolder)
-                if(test-path $pathtofiles){
-                    # call the Add-Font script
-                    Invoke-Expression "& `"$addFontScriptPath`" $pathtofiles"
-                }
-                else{
-                    'Font files folder [{0}] found in extracted zip [{1}]' -f $pathtofiles, $extractfolder | Write-Warning
-                }
-            }
-
-            CreateDummyFile -filepath $addFonthasrunpath
-        }
-        else{
-            'Skipping font additions because of file [{0}]' -f $addFonthasrunpath | Write-Verbose 
-        }
-    }
-}
-
-function LoadBoxstarter{
-    [cmdletbinding()]
-    param()
-    process{
-        Import-Module Boxstarter.WinConfig
-    }
-}
-
-function LoadModules{
-    [cmdletbinding()]
-    param()
-    process{
-        $modstoload = @("$global:codeHome\sayed-tools\powershell\sayed-tools.psm1")
-        foreach($mod in $modstoload){
-            if(test-path $mod -PathType Leaf){
-                'Loading module from [{0}]' -f $mod| Write-Verbose
-                Import-Module $mod -Global -DisableNameChecking
-            }
-            else{
-                'Module file not found at [{0}]' -f $mod | Write-Warning
-            }
-        }
-    }
-}
 
 function RunTask{
     [cmdletbinding()]
@@ -952,7 +624,7 @@ function ConfigureMachine{
             {LoadModules},
             {InstallSecondaryApps}
 
-            #{ConfigureWindows},
+            {ConfigureWindows},
             #{ConfigureVisualStudio},
             #{ConfigureApps}            
         )
