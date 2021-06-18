@@ -545,7 +545,7 @@ function ConfigureWindows{
             # Show hidden files, Show protected OS files, Show file extensions
             {Set-WindowsExplorerOptions -EnableShowHiddenFilesFoldersDrives -EnableShowProtectedOSFiles -EnableShowFileExtensions},
             #--- File Explorer Settings ---
-            #{$Global:machinesetupconfig.ApplicationList | RemoveApps},
+            {$Global:machinesetupconfig.ApplicationList | RemoveApps},
             # will expand explorer to the actual folder you're in
             {Set-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced -Name NavPaneExpandToCurrentFolder -Value 1},
             #adds things back in your left pane like recycle bin
@@ -613,8 +613,7 @@ function ConfigureMachine{
 
         EnsureFolderExists $codehome
         EnsureFolderExists ($global:machinesetupconfig.MachineSetupAppsFolder)
-        ConfigureWindows
-       # InstallBaseApps
+        InstallBaseApps
         
         RunTask @(
             #{EnsurePhotoViewerRegkeyAdded},
@@ -626,7 +625,7 @@ function ConfigureMachine{
 
             #{EnsureBaseReposCloned},
             #{LoadModules},
-            #{InstallSecondaryApps}
+            {InstallSecondaryApps}
 
             {ConfigureWindows}
             #{ConfigureVisualStudio},
